@@ -1,0 +1,11 @@
+{
+    "development": {
+      "username": "need to add _mysql_username",
+      "password": "need to add_mysql_password",
+      "database": "career_crusader",
+      "host": "localhost",
+      "dialect": "mysql"
+    }
+  }
+
+  
