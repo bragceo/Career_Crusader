@@ -1,18 +1,57 @@
-// Import required modules
+// Import the required modules
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 
-// Get the name of the current file (basename)
+// Get the filename of the current file (index.js)
 const basename = path.basename(__filename);
 
-// Set the environment to either the value of the NODE_ENV environment variable or 'development' if not set
+// Set the environment to use ('development' by default)
 const env = process.env.NODE_ENV || 'development';
 
-// Read the database configuration from the config.json file based on the current environment (e.g., development, production)
+// Import the configuration for the current environment from the config.json file
 const config = require(__dirname + '/../config/config.json')[env];
 
-// Create an empty object named 'db' to hold the Sequelize models and other related properties
+// Initialize an empty object to store the models
 const db = {};
+
+// Create a Sequelize instance based on the environment configuration
+let sequelize;
+if (config.use_env_variable) {
+  sequelize = new Sequelize(process.env[config.use_env_variable], config);
+} else {
+  sequelize = new Sequelize(config.database, config.username, config.password, config);
+}
+
+// Read all files in the current directory (models)
+fs
+  .readdirSync(__dirname)
+  .filter(file => {
+    // Filter out any files that are hidden, the current file (index.js), or non-JavaScript files
+    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
+  })
+  .forEach(file => {
+    // For each remaining file, import the model using the Sequelize instance
+    const model = sequelize['import'](path.join(__dirname, file));
+
+    // Add the imported model to the db object, using the model's name as the key
+    db[model.name] = model;
+  });
+
+// Iterate over the models in the db object
+Object.keys(db).forEach(modelName => {
+  // If a model has an associate method, call it to set up relationships between models
+  if (db[modelName].associate) {
+    db[modelName].associate(db);
+  }
+});
+
+// Add the Sequelize instance and the Sequelize constructor to the db object
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
+
+// Export the db object, which now contains all the models and their relationships
+module.exports = db;
+
 
 
