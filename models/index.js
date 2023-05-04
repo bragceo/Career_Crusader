@@ -10,7 +10,8 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 
 // Import the configuration for the current environment from the config.json file
-const config = require(__dirname + '/../config/config.json')[env];
+const config = require(__dirname + '/../config/config.js')[env];
+
 
 // Initialize an empty object to store the models
 const db = {};
@@ -24,19 +25,17 @@ if (config.use_env_variable) {
 }
 
 // Read all files in the current directory (models)
-fs
-  .readdirSync(__dirname)
-  .filter(file => {
-    // Filter out any files that are hidden, the current file (index.js), or non-JavaScript files
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
+fs.readdirSync(__dirname)
+  .filter((file) => {
+    return (
+      file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js'
+    );
   })
-  .forEach(file => {
-    // For each remaining file, import the model using the Sequelize instance
-    const model = sequelize['import'](path.join(__dirname, file));
-
-    // Add the imported model to the db object, using the model's name as the key
+  .forEach((file) => {
+    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
   });
+
 
 // Iterate over the models in the db object
 Object.keys(db).forEach(modelName => {
