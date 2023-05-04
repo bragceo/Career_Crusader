@@ -1,16 +1,13 @@
-// server.js
+
 
 import express from 'express';
+import {default as apiRoutes} from "./routes/index";
 import * as sequelize from './models/index.js';
-import { setupRoutes } from './controllers/index.js';
+import { APP_CONFIG } from './config/config';
 
 const app = express();
-
-// Use JSON middleware
 app.use(express.json());
+app.use(apiRoutes);
 
-// Set up routes
-setupRoutes(app);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(APP_CONFIG.port, () => console.log(`Server started on port ${APP_CONFIG.port}`));

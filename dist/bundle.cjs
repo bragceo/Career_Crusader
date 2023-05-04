@@ -1,109 +1,42 @@
 'use strict';
 
 var express = require('express');
+var jwt = require('jsonwebtoken');
+var dotenv = require('dotenv');
+var bcrypt = require('bcryptjs');
 var fs = require('fs');
 var path = require('path');
 var Sequelize = require('sequelize');
 var mysql = require('mysql2');
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
 
-// config/config.js
+dotenv.config();
 
-const ConfigBase = {
-	development: {
-		username: 'root',
-		password: 'Melnick34?',
-		database: 'career_crusader',
-		host: 'localhost',
-		dialect: 'mysql',
-	},
-	// ... other environment configurations (e.g., test, production) if applicable
+const DATABASE_CONFIG = {
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DATABASE,
+  host: process.env.HOST,
+  dialect: process.env.DIALECT,
 };
 
-// Import the required modules
-
-// Get the filename of the current file (index.js)
-const basename = path.basename(__filename);
-
-// Set the environment to use ('development' by default)
-const env = process.env.NODE_ENV || 'development';
-
-const config = ConfigBase[env];
-
-// ****************** Create the database if not exist
-// ************************************************* //
-
-// Open the connection to MySQL server
-const connection = mysql.createConnection({
-	host: config.host,
-	user: config.username,
-	password: config.password,
-});
-
-// Run create database statement
-connection.query(`CREATE DATABASE IF NOT EXISTS ${config.database}`, function (err, results) {
-	if (!err) {
-		console.log(
-			'\x1b[42m%s\x1b[0m',
-			`Database ${config.database} created successfully on http://localhost/phpmyadmin`
-		);
-	} else {
-		console.log(err);
-	}
-});
-
-// Close the connection
-connection.end();
-// ****************** Create the database if not exist
-// ************************************************* //
-
-// Initialize an empty object to store the models
-const db = {};
-
-// Create a Sequelize instance based on the environment configuration
-let sequelize;
-if (config.use_env_variable) {
-	sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
-	sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
-
-// Read all files in the current directory (models)
-fs.readdirSync(__dirname)
-	.filter((file) => {
-		return file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js';
-	})
-	.forEach((file) => {
-		const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-		db[model.name] = model;
-	});
-
-// Iterate over the models in the db object
-Object.keys(db).forEach((modelName) => {
-	// If a model has an associate method, call it to set up relationships between models
-	if (db[modelName].associate) {
-		db[modelName].associate(db);
-	}
-});
-
-// Add the Sequelize instance and the Sequelize constructor to the db object
-db.sequelize = sequelize;
-db.Sequelize = Sequelize;
+const APP_CONFIG = {
+  port: process.env.PORT,
+	jwtSecret:process.env.JWT_SECRET
+};
 
 const authenticate = (req, res, next) => {
-  const token = req.header('x-auth-token');
+  const token = req.header("x-auth-token");
 
   if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+    return res.status(401).json({ message: "No token, authorization denied" });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, APP_CONFIG.jwtSecret);
     req.user = decoded;
     next();
   } catch (err) {
-    res.status(400).json({ message: 'Token is not valid' });
+    res.status(400).json({ message: "Token is not valid" });
   }
 };
 
@@ -161,96 +94,102 @@ const User = (sequelize, DataTypes) => {
 	return User;
 };
 
-// controllers/userController.js
+const registerUser = async (req, res) => {
+  const { email, password } = req.body;
 
-const router$1 = express.Router();
+  try {
+    let user = await User.findOne({ where: { email } });
 
-// @route   POST api/users/register
-// @desc    Register a user
-// @access  Public
-router$1.post('/register', async (req, res) => {
-	const { email, password } = req.body;
+    if (user) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
 
-	try {
-		let user = await User.findOne({ where: { email } });
+    user = await User.create({
+      email,
+      password: bcrypt.hashSync(password, 10),
+    });
 
-		if (user) {
-			return res.status(400).json({ msg: 'User already exists' });
-		}
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
 
-		user = await User.create({
-			email,
-			password: bcrypt.hashSync(password, 10),
-		});
+    jwt.sign(
+      payload,
+      APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
-		const payload = {
-			user: {
-				id: user.id,
-			},
-		};
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-		jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-			if (err) throw err;
-			res.json({ token });
-		});
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
+  try {
+    let user = await User.findOne({ where: { email } });
 
-// @route   POST api/users/login
-// @desc    Authenticate user and get token
-// @access  Public
-router$1.post('/login', async (req, res) => {
-	const { email, password } = req.body;
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
 
-	try {
-		let user = await User.findOne({ where: { email } });
+    const isMatch = bcrypt.compareSync(password, user.password);
 
-		if (!user) {
-			return res.status(400).json({ msg: 'Invalid email or password' });
-		}
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
 
-		const isMatch = bcrypt.compareSync(password, user.password);
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
 
-		if (!isMatch) {
-			return res.status(400).json({ msg: 'Invalid email or password' });
-		}
+    jwt.sign(
+      payload,
+     APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+const getUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
 
-		const payload = {
-			user: {
-				id: user.id,
-			},
-		};
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-		jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-			if (err) throw err;
-			res.json({ token });
-		});
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
-// @route   GET api/users
-// @desc    Get user by token
-// @access  Private
-router$1.get('/', authenticate, async (req, res) => {
-	try {
-		const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
+const router$2 = express.Router();
 
-		if (!user) {
-			return res.status(404).json({ msg: 'User not found' });
-		}
+router$2.post("/register", registerUser);
 
-		res.json(user);
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
+router$2.post("/login", loginUser);
+
+router$2.get("/", authenticate, getUser);
 
 // models/job.js
 
@@ -310,63 +249,113 @@ const Job = (sequelize, DataTypes) => {
 	return Job;
 };
 
-// Import required modules
+const deleteJob = async (req, res) => {
+  try {
+    // Find the job by primary key (ID)
+    const job = await Job.findByPk(req.params.id);
 
-// Create an Express router
-const router = express.Router();
+    // If the job is not found, return a 404 error
+    if (!job) {
+      return res.status(404).json({ msg: "Job not found" });
+    }
 
-// @route   DELETE api/jobs/:id
-// @desc    Delete a job by ID
-// @access  Private
-router.delete('/:id', authenticate, async (req, res) => {
-	try {
-		// Find the job by primary key (ID)
-		const job = await Job.findByPk(req.params.id);
+    // If the job's user ID doesn't match the authenticated user's ID, return a 401 error
+    if (job.userId !== req.user.id) {
+      return res.status(401).json({ msg: "User not authorized" });
+    }
 
-		// If the job is not found, return a 404 error
-		if (!job) {
-			return res.status(404).json({ msg: 'Job not found' });
-		}
+    // Delete the job from the database
+    await job.destroy();
 
-		// If the job's user ID doesn't match the authenticated user's ID, return a 401 error
-		if (job.userId !== req.user.id) {
-			return res.status(401).json({ msg: 'User not authorized' });
-		}
-
-		// Delete the job from the database
-		await job.destroy();
-
-		// Send a success message
-		res.json({ msg: 'Job removed' });
-	} catch (err) {
-		// Log the error and return a 500 server error
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
+    // Send a success message
+    res.json({ msg: "Job removed" });
+  } catch (err) {
+    // Log the error and return a 500 server error
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
 // Other routes were explained in the previous response.
 
-// Import the express module to work with routes and middleware
+const router$1 = express.Router();
 
-// Define a function called setupRoutes that takes the app (Express application) as an argument
-// This function is responsible for setting up the routes in the application
-const setupRoutes = (app) => {
-	// Tell the Express application to use the userController for all routes starting with /api/users
-	app.use('/api/users', router$1);
-	// Tell the Express application to use the jobController for all routes starting with /api/jobs
-	app.use('/api/jobs', router);
-};
+router$1.delete("/:id", authenticate, deleteJob);
 
-// server.js
+const router = express.Router();
+router.use("/api/users/", router$2);
+
+router.use("/api/jobs/", router$1);
+
+// Import the required modules
+
+// Get the filename of the current file (index.js)
+const basename = path.basename(__filename);
+console.log(DATABASE_CONFIG);
+// const config = ConfigBase[env];
+
+// ****************** Create the database if not exist
+// ************************************************* //
+
+// Open the connection to MySQL server
+const connection = mysql.createConnection({
+	host: DATABASE_CONFIG.host,
+	user: DATABASE_CONFIG.username,
+	password: DATABASE_CONFIG.password,
+
+});
+
+// Run create database statement
+connection.query(`CREATE DATABASE IF NOT EXISTS ${DATABASE_CONFIG.database}`, function (err, results) {
+	if (!err) {
+		console.log(
+			'\x1b[42m%s\x1b[0m',
+			`Database ${DATABASE_CONFIG.database} created successfully on http://localhost/phpmyadmin`
+		);
+	} else {
+		console.log(err);
+	}
+});
+
+// Close the connection
+connection.end();
+// ****************** Create the database if not exist
+// ************************************************* //
+
+// Initialize an empty object to store the models
+const db = {};
+
+// Create a Sequelize instance based on the environment configuration
+let sequelize;
+
+sequelize = new Sequelize('database','username','password',DATABASE_CONFIG);
+
+
+// Read all files in the current directory (models)
+fs.readdirSync(__dirname)
+	.filter((file) => {
+		return file.indexOf('.') !== 0 && file !== basename && file.slice(-3) === '.js';
+	})
+	.forEach((file) => {
+		const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+		db[model.name] = model;
+	});
+
+// Iterate over the models in the db object
+Object.keys(db).forEach((modelName) => {
+	// If a model has an associate method, call it to set up relationships between models
+	if (db[modelName].associate) {
+		db[modelName].associate(db);
+	}
+});
+
+// Add the Sequelize instance and the Sequelize constructor to the db object
+db.sequelize = sequelize;
+db.Sequelize = Sequelize;
 
 const app = express();
-
-// Use JSON middleware
 app.use(express.json());
+app.use(router);
 
-// Set up routes
-setupRoutes(app);
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(APP_CONFIG.port, () => console.log(`Server started on port ${APP_CONFIG.port}`));

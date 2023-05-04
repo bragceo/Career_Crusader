@@ -1,12 +1,15 @@
-// config/config.js
+import dotenv from "dotenv";
+dotenv.config();
 
-export const ConfigBase = {
-	development: {
-		username: 'root',
-		password: 'Melnick34?',
-		database: 'career_crusader',
-		host: 'localhost',
-		dialect: 'mysql',
-	},
-	// ... other environment configurations (e.g., test, production) if applicable
+export const DATABASE_CONFIG = {
+  username: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DATABASE,
+  host: process.env.HOST,
+  dialect: process.env.DIALECT,
+};
+
+export const APP_CONFIG = {
+  port: process.env.PORT,
+	jwtSecret:process.env.JWT_SECRET
 };

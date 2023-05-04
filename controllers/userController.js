@@ -1,99 +1,95 @@
-// controllers/userController.js
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
+import { User } from "../models/user.js";
+import { APP_CONFIG } from "../config/config.js";
 
-import express from 'express';
+const registerUser = async (req, res) => {
+  const { email, password } = req.body;
 
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import auth from '../middlewares/auth.js';
-import { User } from '../models/user.js';
+  try {
+    let user = await User.findOne({ where: { email } });
 
-const router = express.Router();
+    if (user) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
 
-// @route   POST api/users/register
-// @desc    Register a user
-// @access  Public
-router.post('/register', async (req, res) => {
-	const { email, password } = req.body;
+    user = await User.create({
+      email,
+      password: bcrypt.hashSync(password, 10),
+    });
 
-	try {
-		let user = await User.findOne({ where: { email } });
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
 
-		if (user) {
-			return res.status(400).json({ msg: 'User already exists' });
-		}
+    jwt.sign(
+      payload,
+      APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
-		user = await User.create({
-			email,
-			password: bcrypt.hashSync(password, 10),
-		});
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
 
-		const payload = {
-			user: {
-				id: user.id,
-			},
-		};
+  try {
+    let user = await User.findOne({ where: { email } });
 
-		jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-			if (err) throw err;
-			res.json({ token });
-		});
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
 
-// @route   POST api/users/login
-// @desc    Authenticate user and get token
-// @access  Public
-router.post('/login', async (req, res) => {
-	const { email, password } = req.body;
+    const isMatch = bcrypt.compareSync(password, user.password);
 
-	try {
-		let user = await User.findOne({ where: { email } });
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
 
-		if (!user) {
-			return res.status(400).json({ msg: 'Invalid email or password' });
-		}
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
 
-		const isMatch = bcrypt.compareSync(password, user.password);
+    jwt.sign(
+      payload,
+     APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+const getUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
 
-		if (!isMatch) {
-			return res.status(400).json({ msg: 'Invalid email or password' });
-		}
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
 
-		const payload = {
-			user: {
-				id: user.id,
-			},
-		};
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
 
-		jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-			if (err) throw err;
-			res.json({ token });
-		});
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
-
-// @route   GET api/users
-// @desc    Get user by token
-// @access  Private
-router.get('/', auth, async (req, res) => {
-	try {
-		const user = await User.findByPk(req.user.id, { attributes: { exclude: ['password'] } });
-
-		if (!user) {
-			return res.status(404).json({ msg: 'User not found' });
-		}
-
-		res.json(user);
-	} catch (err) {
-		console.error(err.message);
-		res.status(500).send('Server error');
-	}
-});
-
-export default router;
+export { registerUser, loginUser, getUser };

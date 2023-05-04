@@ -8,31 +8,32 @@ import Sequelize from 'sequelize';
 const basename = path.basename(__filename);
 
 // Set the environment to use ('development' by default)
-const env = process.env.NODE_ENV || 'development';
+
 
 // Import the configuration for the current environment from the config.json file
-import { ConfigBase } from '../config/config.js';
+import { DATABASE_CONFIG } from '../config/config.js';
 
 import mysql from 'mysql2';
-
-const config = ConfigBase[env];
+console.log(DATABASE_CONFIG)
+// const config = ConfigBase[env];
 
 // ****************** Create the database if not exist
 // ************************************************* //
 
 // Open the connection to MySQL server
 const connection = mysql.createConnection({
-	host: config.host,
-	user: config.username,
-	password: config.password,
+	host: DATABASE_CONFIG.host,
+	user: DATABASE_CONFIG.username,
+	password: DATABASE_CONFIG.password,
+
 });
 
 // Run create database statement
-connection.query(`CREATE DATABASE IF NOT EXISTS ${config.database}`, function (err, results) {
+connection.query(`CREATE DATABASE IF NOT EXISTS ${DATABASE_CONFIG.database}`, function (err, results) {
 	if (!err) {
 		console.log(
 			'\x1b[42m%s\x1b[0m',
-			`Database ${config.database} created successfully on http://localhost/phpmyadmin`
+			`Database ${DATABASE_CONFIG.database} created successfully on http://localhost/phpmyadmin`
 		);
 	} else {
 		console.log(err);
@@ -49,11 +50,9 @@ const db = {};
 
 // Create a Sequelize instance based on the environment configuration
 let sequelize;
-if (config.use_env_variable) {
-	sequelize = new Sequelize(process.env[config.use_env_variable], config);
-} else {
-	sequelize = new Sequelize(config.database, config.username, config.password, config);
-}
+
+sequelize = new Sequelize('database','username','password',DATABASE_CONFIG);
+
 
 // Read all files in the current directory (models)
 fs.readdirSync(__dirname)
