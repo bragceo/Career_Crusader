@@ -1,7 +1,8 @@
 // server.js
 
-const express = require('express');
-const { setupRoutes } = require('./controllers');
+import express from 'express';
+import * as sequelize from './models/index.js';
+import { setupRoutes } from './controllers/index.js';
 
 const app = express();
 
@@ -12,4 +13,4 @@ app.use(express.json());
 setupRoutes(app);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`)); 
+app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
