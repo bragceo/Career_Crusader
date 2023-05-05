@@ -43,7 +43,7 @@ const authenticate = (req, res, next) => {
 // models/user.js
 
 // Export a function that takes sequelize and DataTypes as arguments
-const User = (sequelize, DataTypes) => {
+const User$1 = (sequelize, DataTypes) => {
 	// Define a User model using sequelize.define method
 	const User = sequelize.define('User', {
 		// Define username attribute with its properties
@@ -58,26 +58,13 @@ const User = (sequelize, DataTypes) => {
 			allowNull: false, // Disallow null values for the email attribute
 			unique: true, // Ensure that each email is unique (no duplicate emails)
 			validate: {
+      },
 				isEmail: true, // Validate that the value is a valid email format
-			},
 		},
 		// Define password attribute with its properties
 		password: {
 			type: DataTypes.STRING, // Set the data type of the password attribute to string
 			allowNull: false, // Disallow null values for the password attribute
-		},
-		// Define retypePassword attribute with its properties
-		retypePassword: {
-			type: DataTypes.STRING, // Set the data type of the password attribute to string
-			allowNull: false, // Disallow null values for the password attribute
-			validate: {
-				// Custom validation to check if the retypePassword value matches the password value
-				isEqualTo: function (value) {
-					if (value !== this.password) {
-						throw new Error('Passwords do not match');
-					}
-				},
-			},
 		},
 	});
 
@@ -85,7 +72,7 @@ const User = (sequelize, DataTypes) => {
 	User.associate = (models) => {
 		// Define a one-to-many relationship between User and Job models
 		User.hasMany(models.Job, {
-			foreignKey: 'userId', // Define a foreign key 'userId' to associate the models
+			foreignKey: 'jobId', // Define a foreign key 'userId' to associate the models
 			as: 'jobs', // Define an alias 'jobs' for easier querying later
 		});
 	};
@@ -93,103 +80,6 @@ const User = (sequelize, DataTypes) => {
 	// Return the User model
 	return User;
 };
-
-const registerUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    let user = await User.findOne({ where: { email } });
-
-    if (user) {
-      return res.status(400).json({ msg: "User already exists" });
-    }
-
-    user = await User.create({
-      email,
-      password: bcrypt.hashSync(password, 10),
-    });
-
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
-    jwt.sign(
-      payload,
-      APP_CONFIG.jwtSecret,
-      { expiresIn: "1h" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    let user = await User.findOne({ where: { email } });
-
-    if (!user) {
-      return res.status(400).json({ msg: "Invalid email or password" });
-    }
-
-    const isMatch = bcrypt.compareSync(password, user.password);
-
-    if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid email or password" });
-    }
-
-    const payload = {
-      user: {
-        id: user.id,
-      },
-    };
-
-    jwt.sign(
-      payload,
-     APP_CONFIG.jwtSecret,
-      { expiresIn: "1h" },
-      (err, token) => {
-        if (err) throw err;
-        res.json({ token });
-      }
-    );
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-const getUser = async (req, res) => {
-  try {
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ["password"] },
-    });
-
-    if (!user) {
-      return res.status(404).json({ msg: "User not found" });
-    }
-
-    res.json(user);
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-const router$2 = express.Router();
-
-router$2.post("/register", registerUser);
-
-router$2.post("/login", loginUser);
-
-router$2.get("/", authenticate, getUser);
 
 // models/job.js
 
@@ -249,49 +139,10 @@ const Job = (sequelize, DataTypes) => {
 	return Job;
 };
 
-const deleteJob = async (req, res) => {
-  try {
-    // Find the job by primary key (ID)
-    const job = await Job.findByPk(req.params.id);
-
-    // If the job is not found, return a 404 error
-    if (!job) {
-      return res.status(404).json({ msg: "Job not found" });
-    }
-
-    // If the job's user ID doesn't match the authenticated user's ID, return a 401 error
-    if (job.userId !== req.user.id) {
-      return res.status(401).json({ msg: "User not authorized" });
-    }
-
-    // Delete the job from the database
-    await job.destroy();
-
-    // Send a success message
-    res.json({ msg: "Job removed" });
-  } catch (err) {
-    // Log the error and return a 500 server error
-    console.error(err.message);
-    res.status(500).send("Server error");
-  }
-};
-
-// Other routes were explained in the previous response.
-
-const router$1 = express.Router();
-
-router$1.delete("/:id", authenticate, deleteJob);
-
-const router = express.Router();
-router.use("/api/users/", router$2);
-
-router.use("/api/jobs/", router$1);
-
 // Import the required modules
 
 // Get the filename of the current file (index.js)
 const basename = path.basename(__filename);
-console.log(DATABASE_CONFIG);
 // const config = ConfigBase[env];
 
 // ****************** Create the database if not exist
@@ -328,8 +179,7 @@ const db = {};
 // Create a Sequelize instance based on the environment configuration
 let sequelize;
 
-sequelize = new Sequelize('database','username','password',DATABASE_CONFIG);
-
+sequelize = new Sequelize(DATABASE_CONFIG.database,DATABASE_CONFIG.username,DATABASE_CONFIG.password, DATABASE_CONFIG);
 
 // Read all files in the current directory (models)
 fs.readdirSync(__dirname)
@@ -341,6 +191,12 @@ fs.readdirSync(__dirname)
 		db[model.name] = model;
 	});
 
+const UserModel = User$1(sequelize, Sequelize.DataTypes);
+db[UserModel.name] = UserModel;
+
+const JobModel = Job(sequelize, Sequelize.DataTypes);
+db[JobModel.name] = JobModel;
+
 // Iterate over the models in the db object
 Object.keys(db).forEach((modelName) => {
 	// If a model has an associate method, call it to set up relationships between models
@@ -349,9 +205,155 @@ Object.keys(db).forEach((modelName) => {
 	}
 });
 
+sequelize.sync({force: false});
+
+
 // Add the Sequelize instance and the Sequelize constructor to the db object
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+
+const User = db.User;
+const registerUser = async (req, res) => {
+  const { userName, retypePassword, email, password } = req.body;
+
+  try {
+    let user = await User.findOne({ where: { email } });
+
+    if (user) {
+      return res.status(400).json({ msg: "User already exists" });
+    }
+
+    if (password !== retypePassword)
+      return res.status(422).json({ msg: "Password doesn't match" });
+
+    user = await User.create({
+      email,
+      password: bcrypt.hashSync(password, 10),
+      userName,
+    });
+
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
+
+    jwt.sign(
+      payload,
+      APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+};
+
+const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    let user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
+
+    const isMatch = bcrypt.compareSync(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid email or password" });
+    }
+
+    const payload = {
+      user: {
+        id: user.id,
+      },
+    };
+
+    jwt.sign(
+      payload,
+      APP_CONFIG.jwtSecret,
+      { expiresIn: "1h" },
+      (err, token) => {
+        if (err) throw err;
+        res.json({ token });
+      }
+    );
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+const getUser = async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id, {
+      attributes: { exclude: ["password"] },
+    });
+
+    if (!user) {
+      return res.status(404).json({ msg: "User not found" });
+    }
+
+    res.json(user);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+const router$2 = express.Router();
+
+router$2.post("/register", registerUser);
+
+router$2.post("/login", loginUser);
+
+router$2.get("/", authenticate, getUser);
+
+// import { Job } from "../models/job.js";
+
+const deleteJob = async (req, res) => {
+  try {
+    // Find the job by primary key (ID)
+    const Job = db.Job;
+    const job = await Job.findByPk(req.params.id);
+
+    // If the job is not found, return a 404 error
+    if (!job) {
+      return res.status(404).json({ msg: "Job not found" });
+    }
+
+    // If the job's user ID doesn't match the authenticated user's ID, return a 401 error
+    if (job.userId !== req.user.id) {
+      return res.status(401).json({ msg: "User not authorized" });
+    }
+
+    // Delete the job from the database
+    await job.destroy();
+
+    // Send a success message
+    res.json({ msg: "Job removed" });
+  } catch (err) {
+    // Log the error and return a 500 server error
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+};
+
+// Other routes were explained in the previous response.
+
+const router$1 = express.Router();
+
+router$1.delete("/:id", authenticate, deleteJob);
+
+const router = express.Router();
+router.use("/api/users/", router$2);
+
+router.use("/api/jobs/", router$1);
 
 const app = express();
 app.use(express.json());

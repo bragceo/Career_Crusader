@@ -1,10 +1,11 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { User } from "../models/user.js";
 import { APP_CONFIG } from "../config/config.js";
+import db from "../models/index";
 
+const User = db.User;
 const registerUser = async (req, res) => {
-  const { email, password } = req.body;
+  const { userName, retypePassword, email, password } = req.body;
 
   try {
     let user = await User.findOne({ where: { email } });
@@ -13,9 +14,13 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ msg: "User already exists" });
     }
 
+    if (password !== retypePassword)
+      return res.status(422).json({ msg: "Password doesn't match" });
+
     user = await User.create({
       email,
       password: bcrypt.hashSync(password, 10),
+      userName,
     });
 
     const payload = {
@@ -34,7 +39,7 @@ const registerUser = async (req, res) => {
       }
     );
   } catch (err) {
-    console.error(err.message);
+    console.error(err);
     res.status(500).send("Server error");
   }
 };
@@ -63,7 +68,7 @@ const loginUser = async (req, res) => {
 
     jwt.sign(
       payload,
-     APP_CONFIG.jwtSecret,
+      APP_CONFIG.jwtSecret,
       { expiresIn: "1h" },
       (err, token) => {
         if (err) throw err;

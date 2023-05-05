@@ -1,7 +1,7 @@
 // models/job.js
 
 // Export a function that takes sequelize and DataTypes as arguments
-export const Job = (sequelize, DataTypes) => {
+const Job = (sequelize, DataTypes) => {
 	// Define a Job model using sequelize.define method
 	const Job = sequelize.define('Job', {
 		// Define title attribute with its properties
@@ -55,3 +55,5 @@ export const Job = (sequelize, DataTypes) => {
 	// Return the Job model
 	return Job;
 };
+
+export default Job;

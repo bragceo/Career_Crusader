@@ -1,8 +1,10 @@
-import { Job } from "../models/job.js";
+// import { Job } from "../models/job.js";
+import db from '../models/index'
 
 const deleteJob = async (req, res) => {
   try {
     // Find the job by primary key (ID)
+    const Job = db.Job;
     const job = await Job.findByPk(req.params.id);
 
     // If the job is not found, return a 404 error

@@ -1,4 +1,6 @@
 // Import the required modules
+import { default as User } from "./User.js";
+import { default as Job } from "./Job.js";
 import fs from 'fs';
 
 import path from 'path';
@@ -14,7 +16,6 @@ const basename = path.basename(__filename);
 import { DATABASE_CONFIG } from '../config/config.js';
 
 import mysql from 'mysql2';
-console.log(DATABASE_CONFIG)
 // const config = ConfigBase[env];
 
 // ****************** Create the database if not exist
@@ -51,8 +52,7 @@ const db = {};
 // Create a Sequelize instance based on the environment configuration
 let sequelize;
 
-sequelize = new Sequelize('database','username','password',DATABASE_CONFIG);
-
+sequelize = new Sequelize(DATABASE_CONFIG.database,DATABASE_CONFIG.username,DATABASE_CONFIG.password, DATABASE_CONFIG);
 
 // Read all files in the current directory (models)
 fs.readdirSync(__dirname)
@@ -64,6 +64,12 @@ fs.readdirSync(__dirname)
 		db[model.name] = model;
 	});
 
+const UserModel = User(sequelize, Sequelize.DataTypes);
+db[UserModel.name] = UserModel
+
+const JobModel = Job(sequelize, Sequelize.DataTypes);
+db[JobModel.name] = JobModel
+
 // Iterate over the models in the db object
 Object.keys(db).forEach((modelName) => {
 	// If a model has an associate method, call it to set up relationships between models
@@ -71,6 +77,9 @@ Object.keys(db).forEach((modelName) => {
 		db[modelName].associate(db);
 	}
 });
+
+sequelize.sync({force: false});
+
 
 // Add the Sequelize instance and the Sequelize constructor to the db object
 db.sequelize = sequelize;
