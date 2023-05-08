@@ -1,0 +1,41 @@
+<section class="register">
+    <div class="text-center my-5">
+        <h1>Search for jobs</h1>
+    </div>
+    <div class="form-container">
+        <form method="GET" action="/job/find">
+            {{#if err}}
+            <div class="alert alert-danger" role="alert">
+                {{{err}}}
+            </div>
+            {{/if}}
+            <div class="form-group mb-3">
+                <label for="keyword" class="mb-2">Search keyword</label>
+                <input type="text" class="form-control" id="keyword" name="keyword" value="{{{keyword}}}"
+                    aria-describedby="Enter keyword" placeholder="Enter keyword">
+            </div>
+
+            <div class="form-group mb-3">
+                <label for="location" class="mb-2">Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{{location}}}"
+                    aria-describedby="Enter location" placeholder="Enter location">
+            </div>
+            <button type="submit" class="btn btn-warning">Search</button>
+        </form>
+    </div>
+
+    <div class="results p-4">
+        {{#each jobs}}
+        <div class="card mb-3 shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{title}}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{company}}</h6>
+                <p class="card-text">{{description}}</p>
+                <p class="card-text">{{location}}</p>
+                <p class="card-text">{{requirements}}</p>
+                <a href="mailto:{{{user}}}" class="btn btn-warning">Apply</a>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</section>

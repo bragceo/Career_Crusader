@@ -1,0 +1,61 @@
+.splash {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 50px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.splash .hero-content {
+  text-align: center;
+}
+
+.hero-img img {
+  border-radius: 15px;
+}
+
+.quote {
+  display: none;
+  transition: all 0.5s ease-in-out;
+}
+
+.quote.active {
+  display: block;
+}
+
+.form-container {
+  max-width: 700px;
+  background-color: #f3f3f3;
+  padding: 50px;
+  border-radius: 15px;
+  margin: auto;
+}
+
+.job {
+  border-radius: 10px;
+  max-width: 650px;
+  margin: auto;
+  border: 1px solid grey;
+}
+
+.jobContainer {
+  max-width: 800px;
+  margin: auto;
+}
+
+.latestListings {
+  background: #393939;
+  color: #fff;
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+@media screen and (max-width: 768px) {
+  .splash {
+    flex-direction: column;
+  }
+}

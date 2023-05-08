@@ -1,0 +1,37 @@
+<section class="register">
+    <div class="text-center my-5">
+        <h1>Register</h1>
+    </div>
+    <div class="form-container">
+        <form method="POST" action="/register">
+            {{#if err}}
+            <div class="alert alert-danger" role="alert">
+                {{{err}}}
+            </div>
+            {{/if}}
+            <div class="form-group mb-3">
+                <label for="username" class="mb-2">Username</label>
+                <input type="text" class="form-control" id="username" name="username" value="{{{username}}}"
+                    aria-describedby="Enter username" placeholder="Enter username">
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-email" class="mb-2">Email address</label>
+                <input type="email" class="form-control" id="user-email" name="email" value="{{{email}}}"
+                    aria-describedby="Enter email" placeholder="Enter email">
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-password" class="mb-2">Password</label>
+                <input type="password" class="form-control" id="user-password" name="password" placeholder="Password">
+            </div>
+            <div class="form-group mb-3">
+                <label for="user-password-confirm" class="mb-2">Confirm Password</label>
+                <input type="password" class="form-control" id="user-password-confirm" name="confirmPassword"
+                    placeholder="Password">
+            </div>
+            <div class="mb-3">
+                <a href="/login" class="nav-link link-primary">Already have an account?</a>
+            </div>
+            <button type="submit" class="btn btn-warning">Submit</button>
+        </form>
+    </div>
+</section>

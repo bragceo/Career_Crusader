@@ -1,10 +1,53 @@
-import express from "express";
-import { default as userRoutes } from "./userRoutes.js";
-import { default as jobRoutes } from "./jobRoutes.js";
-
+const express = require('express');
 const router = express.Router();
-router.use("/api/users/", userRoutes);
+const userController = require('../controllers/userController');
+const auth = require('../middleware/auth');
+const Job = require('../models/job');
 
-router.use("/api/jobs/", jobRoutes);
 
-export default router;
+// Index route
+router.get('/', (req, res) => {
+    Job.findAll({
+        raw: true,
+        nest: true,
+    }).then(jobs =>
+        res.render('index', {
+            req,
+            jobs
+        })
+    );
+});
+
+// login routes
+router.get('/login', (req, res) => {
+    if (req.session.user) {
+        res.redirect('/');
+    }
+    else {
+        res.render('login', {
+            req
+        })
+    }
+});
+
+router.post('/login', userController.login);
+
+// register route
+router.get('/register', (req, res) => {
+    if (req.session.user) {
+        res.redirect('/');
+    }
+    else {
+        res.render('register', {
+            req
+        })
+    }
+});
+
+router.post('/register', userController.register);
+
+// logout route
+router.get('/logout', userController.logout);
+
+
+module.exports = router;

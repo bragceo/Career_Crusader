@@ -1,0 +1,41 @@
+<section class="register">
+    <div class="text-center my-5">
+        <h1>Update Job</h1>
+    </div>
+    <div class="form-container">
+        <form method="POST" action="/job/update">
+            {{#if err}}
+            <div class="alert alert-danger" role="alert">
+                {{{err}}}
+            </div>
+            {{/if}}
+            <input type="hidden" class="form-control" id="jobid" name="jobid" value="{{{title}}}"
+                aria-describedby="Enter Job ID" placeholder="Enter Job ID">
+            <div class="form-group mb-3">
+                <label for="title" class="mb-2">Title</label>
+                <input type="text" class="form-control" id="title" name="title" value="{{{title}}}"
+                    aria-describedby="Enter title" placeholder="Enter title">
+            </div>
+            <div class="form-group mb-3">
+                <label for="company" class="mb-2">Company</label>
+                <input type="text" class="form-control" id="company" name="company" value="{{{company}}}"
+                    aria-describedby="Enter company" placeholder="Enter company">
+            </div>
+            <div class="form-group mb-3">
+                <label for="description" class="mb-2">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3">{{{description}}}</textarea>
+            </div>
+            <div class="form-group mb-3">
+                <label for="location" class="mb-2">Location</label>
+                <input type="text" class="form-control" id="location" name="location" value="{{{location}}}"
+                    aria-describedby="Enter location" placeholder="Enter location">
+            </div>
+            <div class="form-group mb-3">
+                <label for="requirements" class="mb-2">Requirements</label>
+                <textarea class="form-control" id="requirements" name="requirements" value="{{{requirements}}}"
+                    rows="3">{{{requirements}}}</textarea>
+            </div>
+            <button type="submit" class="btn btn-warning">Submit</button>
+        </form>
+    </div>
+</section>

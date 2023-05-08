@@ -1,0 +1,59 @@
+<section class="home">
+    {{#if message}}
+    <div class="alert alert-success" role="alert">
+        {{{message}}}
+    </div>
+    {{/if}}
+    <div class="splash">
+        <div class="hero-img">
+            <img src="img/hero.png" alt="hero">
+        </div>
+        <div class="hero-content">
+            {{#if req.session.user}}
+            <h2>Welcome, Crusader</h2>
+            <p>
+                Search real, open jobs, reviews
+            </p>
+            <p>
+                Post real, open jobs, reviews
+            </p>
+            {{else}}
+            <div class="quote active">
+                <p>"I send <b>over 500</b> resumes out and got zero replies. They were all fake job listings, or
+                    ads.
+                    <b>Career Crusader changed all that.</b> I got my dream job in 2 clicks by applying via Crusader
+                    reviews."
+                </p>
+                <p>- Jane S., 25, software developer</p>
+            </div>
+            <div class="quote">
+                <p>"I was struggling to find a job in my field after graduation, but then I discovered <b>Career
+                        Crusader</b>. Their platform made it so easy to find relevant job postings and apply with
+                    just
+                    a few clicks. Thanks to them, I landed my dream job!"
+                </p>
+                <p>- Emily L., 23, recent college graduate</p>
+            </div>
+            <div class="quote">
+                <p>"I was unhappy with my current job and looking for a change. <b>Career Crusader</b> helped me
+                    discover job opportunities I didn't even know existed. Their user-friendly platform and
+                    personalized
+                    job recommendations made my job search much more efficient and effective."
+                </p>
+                <p>- David M., 38, marketing professional</p>
+            </div>
+            <div class="quote">
+                <p>"I was hesitant to switch jobs because I didn't want to go through the hassle of applying and
+                    interviewing. But with <b>Career Crusader</b>, the process was so seamless and stress-free. I
+                    found
+                    a job I love and couldn't be happier!"
+                </p>
+                <p>- Sarah K., 29, software engineer</p>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+    <div class="latestListings" style="color: #fff">
+        Latest Listings: {{#each jobs}} <span>{{{title}}}</span><span>, </span> {{/each}}
+    </div>
+</section>
