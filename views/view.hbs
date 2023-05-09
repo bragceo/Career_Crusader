@@ -1,0 +1,43 @@
+<section class="view">
+    <div class="text-center my-5">
+        <h1>Job Details</h1>
+    </div>
+    <div class="form-container">
+        {{#if err}}
+        <div class="alert alert-danger" role="alert">
+            {{{err}}}
+        </div>
+        {{/if}}
+        <div class="card mb-3 shadow-sm mb-3">
+            <div class="card-body">
+                <input type="hidden" name="jobID" class="jobID" value="{{job.id}}">
+                <h5 class="card-title">{{job.title}}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{job.company}}</h6>
+                <p class="card-text">{{job.description}}</p>
+                <p class="card-text">{{job.location}}</p>
+                <p class="card-text">{{job.requirements}}</p>
+                <a href="mailto:{{{job.user}}}" class="btn btn-warning">Apply</a>
+            </div>
+        </div>
+        <hr>
+        {{#each job.feedbacks}}
+        <div class="card mb-3 shadow-sm mb-3">
+            <div class="card-body">
+                <h5 class="card-title">{{content}}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{user.username}}</h6>
+            </div>
+        </div>
+        {{/each}}
+        <hr>
+        {{#if req.session.user}}
+        <form method="POST" action="/feedback/comment">
+            <input type="hidden" name="jobID" class="jobID" value="{{job.id}}">
+            <div class="form-group mb-3">
+                <label for="Add feedback" class="mb-2">Leave feedback regarding this job</label>
+                <textarea class="form-control" id="addFeedback" name="comment" rows="3">{{{comment}}}</textarea>
+            </div>
+            <button type="submit" class="btn btn-warning">Submit</button>
+        </form>
+        {{/if}}
+    </div>
+</section>

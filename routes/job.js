@@ -35,4 +35,7 @@ router.get('/search', (req, res) => {
 // search job route
 router.get('/find', jobController.search);
 
+// view job route
+router.get('/view/:id', jobController.view);
+
 module.exports = router;

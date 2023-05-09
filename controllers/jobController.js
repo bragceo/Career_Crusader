@@ -1,7 +1,8 @@
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const Job = require('../models/job');
 const User = require('../models/user');
+const sequelize = require('sequelize');
+const Op = sequelize.Op;
+const Feedback = require('../models/feedback');
 
 exports.create = async (req, res) => {
     try {
@@ -59,6 +60,7 @@ exports.update = async (req, res) => {
         }
 
         const userID = req.session.user.id;
+        console.log("hob ID: " + jobid);
         const job = await Job.findOne({ where: { id: jobid, postedBy: userID } });
         if (!job) {
             res.render('update', {
@@ -74,7 +76,7 @@ exports.update = async (req, res) => {
                 requirements,
                 company
             }, { where: { id: jobid } });
-            res.redirect('/');
+            res.redirect('/job/myjobs');
         }
     }
     catch (err) {
@@ -128,7 +130,8 @@ exports.updateGet = async (req, res) => {
                 description: job.description,
                 location: job.location,
                 requirements: job.requirements,
-                company: job.company
+                company: job.company,
+                req: req
             });
         }
     }
@@ -169,11 +172,20 @@ exports.search = async (req, res) => {
     try {
         const { title, location } = req.query;
         let jobs = await Job.findAll({
+            attributes: ['id', 'title', 'description', 'location', 'requirements', 'company', 'postedBy',
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN feedbacks.upvote is true then 1 else 0 end')), 'upvotes'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN feedbacks.downvote is true then 1 else 0 end')), 'downvotes'],
+                [sequelize.fn('SUM', sequelize.literal('CASE WHEN feedbacks.content is not null then 1 else 0 end')), 'comments']],
             include: [{
                 model: User,
                 required: true
+            },
+            {
+                model: Feedback,
+                required: false
             }],
             where: {},
+            group: ['Job.id', 'User.id'],
             raw: true,
             nest: true,
         });
@@ -185,19 +197,132 @@ exports.search = async (req, res) => {
             jobs = jobs.filter(job => job.location.toLowerCase().includes(location.toLowerCase()));
         }
 
-        jobs = jobs.map(job => {
-            job.user = job.user.email;
-            return job;
-        });
+        if (req.session.user) {
 
-        res.render('search', {
-            jobs: jobs,
-            req: req
-        });
+            const jobIDs = jobs.map(job => job.id);
+            const userID = req.session.user.id;
+
+            const feedbacks = await Feedback.findAll({
+                where: {
+                    jobId: jobIDs,
+                    postedBy: userID
+                },
+                raw: true,
+                nest: true,
+            });
+
+
+            jobs = jobs.map(job => {
+                const feed = feedbacks.filter(feedback => feedback.jobId == job.id);
+                job.upvoted = feed.length ? (feed[0].upvote ? 'voted' : '') : false;
+                job.downvoted = feed.length ? (feed[0].downvote ? 'voted' : '') : false;
+                return job;
+            });
+
+            jobs = jobs.map(job => {
+                job.user = job.user.email;
+                return job;
+            });
+
+            res.render('search', {
+                jobs: jobs,
+                req: req
+            });
+        }
+        else {
+            jobs = jobs.map(job => {
+                job.user = job.user.email;
+                return job;
+            });
+
+            jobs = jobs.map(job => {
+                job.upvoted = '';
+                job.downvoted = '';
+                return job;
+            });
+
+            res.render('search', {
+                jobs: jobs,
+                req: req
+            });
+        }
     } catch (err) {
         console.log(err);
         res.render('search', {
             err: "Error fetching jobs"
+        });
+    }
+}
+
+exports.view = async (req, res) => {
+    try {
+        const job = await Job.findOne({
+            attributes: ['id', 'title', 'description', 'location', 'requirements', 'company', 'postedBy',
+            ],
+            include: [{
+                model: User,
+                required: true
+            }],
+            where: { id: req.params.id },
+            raw: true,
+            nest: true,
+        });
+
+        if (!job) {
+            res.render('view', {
+                err: 'The Job you are trying to view does not exist',
+                jobid: req.params.id
+            })
+        }
+        else {
+            const feedbacks = await Feedback.findAll({
+                include: [{
+                    model: User,
+                    required: true
+                }],
+                where: {
+                    jobId: req.params.id,
+                    content: {
+                        [Op.ne]: null
+                    }
+                },
+                raw: true,
+                nest: true,
+            });
+
+            job.feedbacks = feedbacks;
+
+            if (req.session.user) {
+                const userID = req.session.user.id;
+
+                const feed = feedbacks.filter(feedback => feedback.postedBy == userID);
+
+                job.userContent = feed.length ? feed[0].content : '';
+
+                job.user = job.user.email;
+
+                console.log(job)
+
+                res.render('view', {
+                    job: job,
+                    req: req
+                });
+            }
+            else {
+                job.user = job.user.email;
+                job.userContent = '';
+
+                console.log(job)
+                res.render('view', {
+                    job: job,
+                    req: req
+                });
+            }
+        }
+    } catch (err) {
+        console.log(err);
+        res.render('view', {
+            err: "Error fetching job"
         });
     }
 }

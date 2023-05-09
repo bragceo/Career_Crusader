@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const db = require('../config/database');
 const User = require('./user');
+const Feedback = require('./feedback');
 
 const Job = db.define('job', {
     title: {
@@ -30,6 +31,7 @@ const Job = db.define('job', {
 });
 
 Job.belongsTo(User, { foreignKey: 'postedBy' });
+Job.hasMany(Feedback, { foreignKey: 'jobId' });
 
 Job.sync().then(() => {
     console.log('Job created');

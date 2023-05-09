@@ -41,6 +41,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // routes
 app.use('/', require('./routes/index'));
 app.use('/job', require('./routes/job'));
+app.use('/feedback', require('./routes/feedback'));
 
 const PORT = process.env.PORT || 5000;
 

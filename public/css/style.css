@@ -54,6 +54,44 @@
   border-radius: 10px;
 }
 
+.feedback {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0px;
+  margin-top: 20px;
+}
+
+.feedbtn {
+  padding: 5px 20px;
+  border: 2px solid #b6b6b6;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.upvote:hover,
+.upvote.voted {
+  color: #00d700;
+  border-color: #00d700;
+}
+
+.downvote:hover,
+.downvote.voted {
+  color: #d60000;
+  border-color: #d60000;
+}
+
+.comments:hover,
+.comments:hover a,
+.comments.voted {
+  color: #0077ff;
+  border-color: #0077ff;
+}
+
+.comments a {
+  text-decoration: none;
+  color: #000;
+}
+
 @media screen and (max-width: 768px) {
   .splash {
     flex-direction: column;
