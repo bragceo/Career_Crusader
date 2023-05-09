@@ -20,8 +20,4 @@ const Feedback = db.define('feedback', {
 
 Feedback.belongsTo(User, { foreignKey: 'postedBy' });
 
-
-Feedback.sync().then(() => {
-    console.log('table created');
-});
 module.exports = Feedback;

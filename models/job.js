@@ -33,8 +33,13 @@ const Job = db.define('job', {
 Job.belongsTo(User, { foreignKey: 'postedBy' });
 Job.hasMany(Feedback, { foreignKey: 'jobId' });
 
-Job.sync().then(() => {
-    console.log('Job created');
+User.sync().then(() => {
+    Job.sync().then(() => {
+        Feedback.sync().then(() => {
+            console.log('All models synced');
+        });
+    });
 });
+
 
 module.exports = Job;
