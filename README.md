@@ -45,6 +45,17 @@ https://bragceo.github.io/portfolio---challenge---2/
 
 https://docs.google.com/presentation/d/1HCnd7-eIsTozXhWxaYnvUDM4C4c096IwWrQvYTVxnqA/edit#slide=id.g1e27c7a6c91_1_28
 
+## Screenshots
+
+<img width="1440" alt="Screen Shot 2023-05-11 at 7 44 38 AM" src="https://github.com/bragceo/Career_Crusader/assets/119948453/8e4ad082-6374-473c-a0b8-8707a3490ea9">
+
+<img width="1440" alt="Screen Shot 2023-05-11 at 7 44 48 AM" src="https://github.com/bragceo/Career_Crusader/assets/119948453/55f382ff-54d4-40a9-a58a-46ed288d9f95">
+
+<img width="1440" alt="Screen Shot 2023-05-11 at 7 45 07 AM" src="https://github.com/bragceo/Career_Crusader/assets/119948453/69db0889-d2c3-42e5-b71a-07647029082d">
+
+<img width="1440" alt="Screen Shot 2023-05-11 at 7 45 14 AM" src="https://github.com/bragceo/Career_Crusader/assets/119948453/248eb460-8219-49de-a5eb-c0398dbb35ee">
+
+
 ## Overview of Code structure and its components:
 
 
