@@ -1,7 +1,5 @@
 # Career_Crusader
 
-# Career_Crusader
-
 ## Description 
 
 Career Crusader is a job listing platform that allows users to post, update, delete, and search for jobs. The application is built with Express.js, a fast, unopinionated, and minimalist web framework for Node.js. It uses MySQL for its database, Handlebars as its templating engine, and Express-Session for session management. 
@@ -45,8 +43,7 @@ https://bragceo.github.io/portfolio---challenge---2/
 
 ## Google Slides Presentation
 
-Career_Crusader_presentation_Final
-
+https://docs.google.com/presentation/d/1HCnd7-eIsTozXhWxaYnvUDM4C4c096IwWrQvYTVxnqA/edit#slide=id.g1e27c7a6c91_1_28
 
 ## Overview of Code structure and its components:
 
