@@ -43,12 +43,12 @@ app.use('/', require('./routes/index'));
 app.use('/job', require('./routes/job'));
 app.use('/feedback', require('./routes/feedback'));
 
-// const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-// app.listen(PORT, console.log(`Server started on port ${PORT}`));
+app.listen(PORT, console.log(`Server started on port ${PORT}`));
 
-const PORT = process.env.PORT || 3000; // Use Heroku's PORT or a default port when running locally
+// const PORT = process.env.PORT || 3000; // Use Heroku's PORT or a default port when running locally
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
